@@ -1,7 +1,7 @@
 {
   "name": "pi-chrome-cdp",
   "version": "1.0.0",
-  "description": "Lightweight Chrome DevTools Protocol CLI skill for pi coding agents — no Puppeteer, works with 100+ tabs",
+  "description": "Give your AI agent access to your live Chrome session — works out of the box, connects to tabs you already have open",
   "keywords": ["pi-package", "pi", "pi-coding-agent", "skills", "chrome", "cdp", "browser", "devtools"],
   "license": "MIT",
   "files": ["skills/", "README.md"],

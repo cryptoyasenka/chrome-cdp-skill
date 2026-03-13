@@ -1,42 +1,55 @@
-# chrome-cdp skill
+# chrome-cdp
 
-A lightweight Chrome DevTools Protocol CLI for AI coding agents. Connects directly via WebSocket — no Puppeteer, no browser automation framework.
+Let your AI agent see and interact with your **live Chrome session** — the tabs you already have open, your logged-in accounts, your current page state. No browser automation framework, no separate browser instance, no re-login.
 
-This lets your agents to use your current session for browsing - allowing them to inspect and interact with your tabs.
+Works out of the box with any Chrome installation. One toggle to enable, nothing else to install.
 
-## Why not chrome-devtools-mcp?
+## Why this matters
 
-[chrome-devtools-mcp](https://github.com/modelcontextprotocol/servers) uses Puppeteer under the hood, which opens a dedicated WebSocket connection per command. With many tabs open, Puppeteer frequently times out during target enumeration. `chrome-cdp` connects directly and works reliably with 100+ tabs.
+Most browser automation tools launch a fresh, isolated browser. This one connects to the Chrome you're already running, so your agent can:
 
-### Chrome's "Allow debugging" allowlist
-
-Chrome shows a one-time **Allow debugging** modal the first time a remote debugging client connects to a tab. Both tools require user approval — but they handle persistence differently:
-
-- **chrome-devtools-mcp**: each command reconnects, so the modal can re-appear.
-- **chrome-cdp**: on first access, a per-tab background daemon is spawned that holds the WebSocket session open. Subsequent commands reuse it — no repeated modals. Daemons auto-exit after 20 minutes of inactivity.
+- Read pages you're logged into (Gmail, GitHub, internal tools, ...)
+- Interact with tabs you're actively working in
+- See the actual state of a page mid-workflow, not a clean reload
 
 ## Installation
 
-1. **Enable remote debugging in Chrome**: navigate to `chrome://inspect/#remote-debugging` and toggle the switch.
-
-2. **Copy the skill** into your pi skills directory (or wherever your agent loads skills from):
-   ```
-   cp -r . ~/.pi/agent/skills/chrome-cdp
-   ```
-
-3. **Node.js 22+** is required (the script uses the built-in `WebSocket` API, no npm install needed).
-
-## Manual Usage (you are unlikely to need it)
+### As a pi skill
 
 ```bash
-scripts/cdp.mjs list                            # list open tabs with disambiguating targetId prefixes
-scripts/cdp.mjs shot <target>                   # screenshot → /tmp/screenshot.png
-scripts/cdp.mjs snap <target>                   # accessibility tree (compact, semantic)
-scripts/cdp.mjs html <target> [".selector"]     # full HTML or scoped to CSS selector
-scripts/cdp.mjs eval <target> "expression"      # evaluate JS in page context
-scripts/cdp.mjs nav  <target> https://...       # navigate and wait for load
-scripts/cdp.mjs net  <target>                   # network resource timing
-scripts/cdp.mjs stop [target]                   # stop daemon(s)
+pi install git:github.com/pasky/chrome-cdp-skill@v1.0.1
 ```
 
-`<target>` is a unique prefix of the targetId shown by `list`. The CLI rejects ambiguous prefixes.
+### For other agents (Amp, Claude Code, Cursor, etc.)
+
+Clone or copy the `skills/chrome-cdp/` directory wherever your agent loads skills or context from. The only runtime dependency is **Node.js 22+** — no npm install needed.
+
+### Enable remote debugging in Chrome
+
+Navigate to `chrome://inspect/#remote-debugging` and toggle the switch. That's it.
+
+## Usage
+
+```bash
+scripts/cdp.mjs list                              # list open tabs
+scripts/cdp.mjs shot   <target>                   # screenshot → /tmp/screenshot.png
+scripts/cdp.mjs snap   <target>                   # accessibility tree (compact, semantic)
+scripts/cdp.mjs html   <target> [".selector"]     # full HTML or scoped to CSS selector
+scripts/cdp.mjs eval   <target> "expression"      # evaluate JS in page context
+scripts/cdp.mjs nav    <target> https://...       # navigate and wait for load
+scripts/cdp.mjs net    <target>                   # network resource timing
+scripts/cdp.mjs click  <target> "selector"        # click element by CSS selector
+scripts/cdp.mjs clickxy <target> <x> <y>          # click at CSS pixel coordinates
+scripts/cdp.mjs type   <target> "text"            # type at focused element (works in cross-origin iframes)
+scripts/cdp.mjs loadall <target> "selector"       # click "load more" until gone
+scripts/cdp.mjs evalraw <target> <method> [json]  # raw CDP command passthrough
+scripts/cdp.mjs stop   [target]                   # stop daemon(s)
+```
+
+`<target>` is a unique prefix of the targetId shown by `list`.
+
+## How it works
+
+Connects directly to Chrome's remote debugging WebSocket — no Puppeteer, no intermediary. On first access to a tab, a lightweight background daemon is spawned that holds the session open. Chrome's "Allow debugging" modal appears once per tab; subsequent commands reuse the daemon silently. Daemons auto-exit after 20 minutes of inactivity.
+
+This approach is also why it handles 100+ open tabs reliably, where tools built on Puppeteer often time out during target enumeration.
