@@ -7,7 +7,7 @@
 // the CDP session open. Chrome's "Allow debugging" modal fires once per
 // daemon (= once per tab). Daemons auto-exit after 20min idle.
 
-import { readFileSync, writeFileSync, unlinkSync, existsSync, readdirSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, unlinkSync, existsSync, mkdirSync } from 'fs';
 import { homedir } from 'os';
 import { resolve } from 'path';
 import { spawn } from 'child_process';
@@ -62,16 +62,6 @@ function getWsUrl() {
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-function listDaemonSockets() {
-  try {
-    return readdirSync(RUNTIME_DIR)
-      .filter(f => f.startsWith('cdp-') && f.endsWith('.sock'))
-      .map(f => ({
-        targetId: f.slice(4, -5),
-        socketPath: resolve(RUNTIME_DIR, f),
-      }));
-  } catch { return []; }
-}
 
 function resolvePrefix(prefix, candidates, noun = 'target', missingHint = '') {
   const upper = prefix.toUpperCase();
@@ -672,36 +662,24 @@ function sendCommand(conn, req) {
   });
 }
 
-// Find any running daemon socket to reuse for list
-function findAnyDaemonSocket() {
-  return listDaemonSockets()[0]?.socketPath || null;
-}
-
 // ---------------------------------------------------------------------------
 // Stop daemons
 // ---------------------------------------------------------------------------
 
 async function stopDaemons(targetPrefix) {
-  const daemons = listDaemonSockets();
+  if (!existsSync(PAGES_CACHE)) return;
+  const pages = JSON.parse(readFileSync(PAGES_CACHE, 'utf8'));
+  const targets = targetPrefix
+    ? [resolvePrefix(targetPrefix, pages.map(p => p.targetId), 'target')]
+    : pages.map(p => p.targetId);
 
-  if (targetPrefix) {
-    const targetId = resolvePrefix(targetPrefix, daemons.map(d => d.targetId), 'daemon');
-    const daemon = daemons.find(d => d.targetId === targetId);
+  for (const targetId of targets) {
+    const sp = sockPath(targetId);
     try {
-      const conn = await connectToSocket(daemon.socketPath);
+      const conn = await connectToSocket(sp);
       await sendCommand(conn, { cmd: 'stop' });
     } catch {
-      try { unlinkSync(daemon.socketPath); } catch {}
-    }
-    return;
-  }
-
-  for (const daemon of daemons) {
-    try {
-      const conn = await connectToSocket(daemon.socketPath);
-      await sendCommand(conn, { cmd: 'stop' });
-    } catch {
-      try { unlinkSync(daemon.socketPath); } catch {}
+      try { unlinkSync(sp); } catch {}
     }
   }
 }
@@ -779,24 +757,11 @@ async function main() {
     console.log(USAGE); process.exit(0);
   }
 
-  // List — use existing daemon if available, otherwise direct
   if (cmd === 'list' || cmd === 'ls') {
-    let pages;
-    const existingSock = findAnyDaemonSocket();
-    if (existingSock) {
-      try {
-        const conn = await connectToSocket(existingSock);
-        const resp = await sendCommand(conn, { cmd: 'list_raw' });
-        if (resp.ok) pages = JSON.parse(resp.result);
-      } catch {}
-    }
-    if (!pages) {
-      // No daemon running — connect directly (will trigger one Allow)
-      const cdp = new CDP();
-      await cdp.connect(getWsUrl());
-      pages = await getPages(cdp);
-      cdp.close();
-    }
+    const cdp = new CDP();
+    await cdp.connect(getWsUrl());
+    const pages = await getPages(cdp);
+    cdp.close();
     writeFileSync(PAGES_CACHE, JSON.stringify(pages), { mode: 0o600 });
     console.log(formatPageList(pages));
     setTimeout(() => process.exit(0), 100);
@@ -840,21 +805,13 @@ async function main() {
     process.exit(1);
   }
 
-  // Resolve prefix → full targetId from cache or running daemon
-  let targetId;
-  const daemonTargetIds = listDaemonSockets().map(d => d.targetId);
-  const daemonMatches = daemonTargetIds.filter(id => id.toUpperCase().startsWith(targetPrefix.toUpperCase()));
-
-  if (daemonMatches.length > 0) {
-    targetId = resolvePrefix(targetPrefix, daemonTargetIds, 'daemon');
-  } else {
-    if (!existsSync(PAGES_CACHE)) {
-      console.error('No page list cached. Run "cdp list" first.');
-      process.exit(1);
-    }
-    const pages = JSON.parse(readFileSync(PAGES_CACHE, 'utf8'));
-    targetId = resolvePrefix(targetPrefix, pages.map(p => p.targetId), 'target', 'Run "cdp list".');
+  // Resolve prefix → full targetId from pages cache
+  if (!existsSync(PAGES_CACHE)) {
+    console.error('No page list cached. Run "cdp list" first.');
+    process.exit(1);
   }
+  const pages = JSON.parse(readFileSync(PAGES_CACHE, 'utf8'));
+  const targetId = resolvePrefix(targetPrefix, pages.map(p => p.targetId), 'target', 'Run "cdp list".');
 
   const conn = await getOrStartTabDaemon(targetId);
 
