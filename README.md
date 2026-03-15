@@ -34,7 +34,7 @@ The CLI auto-detects Chrome, Chromium, Brave, Edge, and Vivaldi on macOS and Lin
 
 ```bash
 scripts/cdp.mjs list                              # list open tabs
-scripts/cdp.mjs shot   <target>                   # screenshot → $TMPDIR/screenshot.png
+scripts/cdp.mjs shot   <target>                   # screenshot → ~/.cache/cdp/screenshot-*.png
 scripts/cdp.mjs snap   <target>                   # accessibility tree (compact, semantic)
 scripts/cdp.mjs html   <target> [".selector"]     # full HTML or scoped to CSS selector
 scripts/cdp.mjs eval   <target> "expression"      # evaluate JS in page context

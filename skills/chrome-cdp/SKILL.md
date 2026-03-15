@@ -26,7 +26,7 @@ scripts/cdp.mjs list
 ### Take a screenshot
 
 ```bash
-scripts/cdp.mjs shot <target> [file]    # default: $TMPDIR/screenshot.png
+scripts/cdp.mjs shot <target> [file]    # default: ~/.cache/cdp/screenshot-*.png
 ```
 
 Captures the **viewport only**. Scroll first with `eval` if you need content below the fold. Output includes the page's DPR and coordinate conversion hint (see **Coordinates** below).

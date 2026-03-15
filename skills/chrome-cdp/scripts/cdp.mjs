@@ -8,7 +8,8 @@
 // daemon (= once per tab). Daemons auto-exit after 20min idle.
 
 import { readFileSync, writeFileSync, unlinkSync, existsSync, readdirSync, mkdirSync } from 'fs';
-import { homedir, tmpdir } from 'os';
+import { randomBytes } from 'crypto';
+import { homedir } from 'os';
 import { resolve } from 'path';
 import { spawn } from 'child_process';
 import net from 'net';
@@ -19,11 +20,14 @@ const IDLE_TIMEOUT = 20 * 60 * 1000;
 const DAEMON_CONNECT_RETRIES = 20;
 const DAEMON_CONNECT_DELAY = 300;
 const MIN_TARGET_PREFIX_LEN = 8;
+process.umask(0o077);
 const RUNTIME_DIR = resolve(homedir(), '.cache', 'cdp');
-mkdirSync(RUNTIME_DIR, { recursive: true, mode: 0o700 });
+try { mkdirSync(RUNTIME_DIR, { recursive: true, mode: 0o700 }); } catch {}
 const SOCK_PREFIX = resolve(RUNTIME_DIR, 'cdp-');
 const PAGES_CACHE = resolve(RUNTIME_DIR, 'pages.json');
-const DEFAULT_SCREENSHOT = resolve(tmpdir(), 'screenshot.png');
+function defaultScreenshotPath() {
+  return resolve(RUNTIME_DIR, `screenshot-${Date.now()}-${randomBytes(4).toString('hex')}.png`);
+}
 
 function sockPath(targetId) { return `${SOCK_PREFIX}${targetId}.sock`; }
 
@@ -303,7 +307,7 @@ async function shotStr(cdp, sid, filePath) {
   }
 
   const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, sid);
-  const out = filePath || DEFAULT_SCREENSHOT;
+  const out = filePath || defaultScreenshotPath();
   writeFileSync(out, Buffer.from(data, 'base64'));
 
   const lines = [out];
@@ -349,8 +353,14 @@ async function waitForDocumentReady(cdp, sid, timeoutMs = NAVIGATION_TIMEOUT) {
 }
 
 async function navStr(cdp, sid, url) {
-  const scheme = url.split(':')[0]?.toLowerCase();
-  if (scheme !== 'http' && scheme !== 'https') throw new Error(`Only http/https URLs allowed, got: ${url}`);
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:')
+      throw new Error(`Only http/https URLs allowed, got: ${url}`);
+  } catch (e) {
+    if (e.message.startsWith('Only')) throw e;
+    throw new Error(`Invalid URL: ${url}`);
+  }
   await cdp.send('Page.enable', {}, sid);
   const loadEvent = cdp.waitForEvent('Page.loadEventFired', NAVIGATION_TIMEOUT);
   const result = await cdp.send('Page.navigate', { url }, sid);
@@ -709,7 +719,7 @@ Usage: cdp <command> [args]
   list                              List open pages (shows unique target prefixes)
   snap  <target>                    Accessibility tree snapshot
   eval  <target> <expr>             Evaluate JS expression
-  shot  <target> [file]             Screenshot (default: ${DEFAULT_SCREENSHOT}); prints coordinate mapping
+  shot  <target> [file]             Screenshot (default: ~/.cache/cdp/screenshot-*.png); prints coordinate mapping
   html  <target> [selector]         Get HTML (full page or CSS selector)
   nav   <target> <url>              Navigate to URL and wait for load completion
   net   <target>                    Network performance entries
