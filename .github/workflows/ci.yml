@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main, agentx]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke:
+    name: smoke (${{ matrix.os }}, node ${{ matrix.node }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ['22.5', '22.x', '24.x']
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Confirm Node version meets fork floor (>= 22.5)
+        shell: bash
+        run: |
+          node --version
+          node -e "const [maj, min] = process.versions.node.split('.').map(Number); if (maj < 22 || (maj === 22 && min < 5)) { console.error('Node too old for fork'); process.exit(1); }"
+
+      - name: Syntax check (node --check)
+        shell: bash
+        run: |
+          node --check skills/chrome-cdp/scripts/agentx.mjs
+          node --check skills/chrome-cdp/scripts/cdp.mjs
+
+      - name: agentx --help exits 0 and prints usage
+        shell: bash
+        env:
+          APPDATA: ${{ runner.temp }}/no-agentx
+        run: |
+          out=$(node skills/chrome-cdp/scripts/agentx.mjs --help)
+          echo "$out"
+          echo "$out" | grep -q "AgentX profile resolver" || { echo "help output missing expected header"; exit 1; }
+          echo "$out" | grep -q "agentx doctor" || { echo "help output missing doctor entry"; exit 1; }
+
+      - name: agentx doctor — FAILs cleanly when AgentX is absent
+        shell: bash
+        env:
+          APPDATA: ${{ runner.temp }}/no-agentx
+        run: |
+          set +e
+          out=$(node skills/chrome-cdp/scripts/agentx.mjs doctor 2>&1)
+          code=$?
+          set -e
+          echo "$out"
+          echo "(observed exit=$code)"
+          echo "$out" | grep -q "^agentx doctor:" || { echo "missing 'agentx doctor:' header"; exit 1; }
+          echo "$out" | grep -q "\[FAIL\]" || { echo "expected at least one [FAIL] line on a runner without AgentX"; exit 1; }
+          if [ "$code" = "0" ]; then
+            echo "expected non-zero exit on no-AgentX runner, got 0"
+            exit 1
+          fi
+
+      - name: agentx with unknown command exits 2
+        shell: bash
+        env:
+          APPDATA: ${{ runner.temp }}/no-agentx
+        run: |
+          set +e
+          node skills/chrome-cdp/scripts/agentx.mjs bogus-command >/dev/null 2>&1
+          code=$?
+          set -e
+          if [ "$code" != "2" ]; then
+            echo "expected exit 2 for unknown command, got $code"
+            exit 1
+          fi

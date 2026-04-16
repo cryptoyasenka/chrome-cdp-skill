@@ -1,5 +1,9 @@
 # chrome-cdp
 
+[![CI](https://github.com/cryptoyasenka/chrome-cdp-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/cryptoyasenka/chrome-cdp-skill/actions/workflows/ci.yml)
+[![Node ≥ 22.5](https://img.shields.io/badge/node-%E2%89%A5%2022.5-brightgreen)](https://nodejs.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 Let your AI agent see and interact with your **live Chrome session** — the tabs you already have open, your logged-in accounts, your current page state. No browser automation framework, no separate browser instance, no re-login.
 
 Works out of the box with any Chrome installation. One toggle to enable, nothing else to install.
