@@ -1,6 +1,7 @@
 MIT License
 
-Copyright (c) 2026 pasky
+Copyright (c) 2026 Petr Baudis (@pasky) — upstream chrome-cdp-skill
+Copyright (c) 2026 @cryptoyasenka — fork additions (AgentX resolver, upload command)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -78,3 +78,11 @@ jobs:
             echo "expected exit 2 for unknown command, got $code"
             exit 1
           fi
+
+      - name: cdp.mjs --help lists fork-specific upload command
+        shell: bash
+        run: |
+          out=$(node skills/chrome-cdp/scripts/cdp.mjs --help)
+          echo "$out"
+          echo "$out" | grep -q "^Usage: cdp" || { echo "cdp --help missing expected usage header"; exit 1; }
+          echo "$out" | grep -q "upload" || { echo "cdp --help missing fork-specific 'upload' command"; exit 1; }
