@@ -1,7 +1,7 @@
 {
   "name": "pi-chrome-cdp",
   "version": "1.0.2",
-  "description": "Give your AI agent access to your live Chrome session — works out of the box, connects to tabs you already have open",
+  "description": "Fork of pasky/chrome-cdp-skill with AgentX antidetect browser adapter + DOM.setFileInputFiles upload command",
   "keywords": [
     "pi-package",
     "pi",
@@ -10,12 +10,35 @@
     "chrome",
     "cdp",
     "browser",
-    "devtools"
+    "devtools",
+    "agentx",
+    "antidetect",
+    "claude-code"
   ],
   "license": "MIT",
+  "author": "Petr Baudis (@pasky) — original; @cryptoyasenka — fork additions (AgentX + upload)",
+  "contributors": [
+    {
+      "name": "Petr Baudis",
+      "url": "https://github.com/pasky"
+    },
+    {
+      "name": "cryptoyasenka",
+      "url": "https://github.com/cryptoyasenka"
+    }
+  ],
+  "homepage": "https://github.com/cryptoyasenka/chrome-cdp-skill",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cryptoyasenka/chrome-cdp-skill.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cryptoyasenka/chrome-cdp-skill/issues"
+  },
   "files": [
     "skills/",
-    "README.md"
+    "README.md",
+    "docs/"
   ],
   "pi": {
     "skills": [

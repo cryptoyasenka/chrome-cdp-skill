@@ -6,10 +6,12 @@ Works out of the box with any Chrome installation. One toggle to enable, nothing
 
 ## What this fork adds
 
-This is a fork of [pasky/chrome-cdp-skill](https://github.com/pasky/chrome-cdp-skill) with two additions:
+This is a fork of [pasky/chrome-cdp-skill](https://github.com/pasky/chrome-cdp-skill) maintained by **[@cryptoyasenka](https://github.com/cryptoyasenka)**, with two additions on top of the upstream CLI:
 
-- **AgentX antidetect browser support** — `scripts/agentx.mjs` resolves an AgentX profile (by id or name) to its CDP endpoint, so Claude Code can read and drive specific profiles in multi-account workflows. Full walkthrough: **[docs/AGENTX-WITH-CLAUDE.md](docs/AGENTX-WITH-CLAUDE.md)**.
-- **`upload` command** — attach a local file to an `<input type="file">` via `DOM.setFileInputFiles`, without opening the native picker dialog.
+- **AgentX antidetect browser support** — `scripts/agentx.mjs` (new in this fork) resolves an AgentX profile (by id or name) to its CDP endpoint, so Claude Code can read and drive specific profiles in multi-account workflows. Full walkthrough: **[docs/AGENTX-WITH-CLAUDE.md](docs/AGENTX-WITH-CLAUDE.md)**.
+- **`upload` command** (new in this fork) — attach a local file to an `<input type="file">` via `DOM.setFileInputFiles`, without opening the native picker dialog.
+
+Everything else — the daemon architecture, the `list`/`shot`/`snap`/`eval`/`nav`/`click`/`type`/`loadall` commands, the auto-detect logic — is upstream work by [Petr Baudis (@pasky)](https://github.com/pasky) and used here under the original MIT license.
 
 ### Quick install as a Claude Code skill (Windows)
 

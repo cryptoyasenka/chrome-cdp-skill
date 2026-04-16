@@ -184,6 +184,12 @@ The selector didn't match any profile. Run `agentx list` to see exact names. Sel
 
 The tradeoff: this fork only resolves and connects — it doesn't automate profile creation, proxy rotation, or fingerprint management. Those are AgentX's job. This is a thin bridge, not a replacement.
 
-## Upstream
+## Credits
 
-This fork's non-AgentX functionality comes entirely from [pasky/chrome-cdp-skill](https://github.com/pasky/chrome-cdp-skill). The `upload` command and the AgentX resolver are the only additions here. Credit and design for the rest go to Petr Baudis.
+**Fork additions** (AgentX resolver + `upload` command + this guide) by [@cryptoyasenka](https://github.com/cryptoyasenka). Released under MIT, same as upstream.
+
+**Upstream** — the daemon architecture, CDP client, and every non-AgentX command come from [pasky/chrome-cdp-skill](https://github.com/pasky/chrome-cdp-skill) by [Petr Baudis (@pasky)](https://github.com/pasky). Go star the original — this fork is a thin bridge, the hard work is his.
+
+If you find a bug:
+- In the AgentX resolver or the `upload` command → [file it here](https://github.com/cryptoyasenka/chrome-cdp-skill/issues) on the fork.
+- In anything else → [file it upstream](https://github.com/pasky/chrome-cdp-skill/issues).
