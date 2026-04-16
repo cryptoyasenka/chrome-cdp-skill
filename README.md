@@ -4,25 +4,41 @@ Let your AI agent see and interact with your **live Chrome session** — the tab
 
 Works out of the box with any Chrome installation. One toggle to enable, nothing else to install.
 
-> **Fork additions** on top of [pasky/chrome-cdp-skill](https://github.com/pasky/chrome-cdp-skill):
-> - `scripts/agentx.mjs` — resolves an AgentX antidetect browser profile (by id or name) to its CDP endpoint. See `skills/chrome-cdp/SKILL.md` → "AgentX antidetect browser".
-> - `upload <target> <selector> <file>` — attach a local file to `<input type="file">` via `DOM.setFileInputFiles`. No picker dialog.
->
-> **Install as Claude Code skill (Windows, per-user)** — pick one shell:
->
-> `cmd.exe`:
-> ```cmd
-> git clone https://github.com/cryptoyasenka/chrome-cdp-skill C:\chrome-cdp-skill
-> mklink /J %USERPROFILE%\.claude\skills\chrome-cdp C:\chrome-cdp-skill\skills\chrome-cdp
-> ```
->
-> PowerShell:
-> ```powershell
-> git clone https://github.com/cryptoyasenka/chrome-cdp-skill C:\chrome-cdp-skill
-> New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\chrome-cdp" -Target "C:\chrome-cdp-skill\skills\chrome-cdp"
-> ```
->
-> Junctions don't require admin. Requires Node 22.5+ (for the AgentX helper's built-in `node:sqlite`). Once the junction is in place, any Claude Code session discovers the skill automatically — `git pull` in the cloned repo is reflected immediately.
+## What this fork adds
+
+This is a fork of [pasky/chrome-cdp-skill](https://github.com/pasky/chrome-cdp-skill) with two additions:
+
+- **AgentX antidetect browser support** — `scripts/agentx.mjs` resolves an AgentX profile (by id or name) to its CDP endpoint, so Claude Code can read and drive specific profiles in multi-account workflows. Full walkthrough: **[docs/AGENTX-WITH-CLAUDE.md](docs/AGENTX-WITH-CLAUDE.md)**.
+- **`upload` command** — attach a local file to an `<input type="file">` via `DOM.setFileInputFiles`, without opening the native picker dialog.
+
+### Quick install as a Claude Code skill (Windows)
+
+cmd.exe:
+
+```cmd
+git clone https://github.com/cryptoyasenka/chrome-cdp-skill C:\chrome-cdp-skill
+mklink /J %USERPROFILE%\.claude\skills\chrome-cdp C:\chrome-cdp-skill\skills\chrome-cdp
+```
+
+PowerShell:
+
+```powershell
+git clone https://github.com/cryptoyasenka/chrome-cdp-skill C:\chrome-cdp-skill
+New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\chrome-cdp" -Target "C:\chrome-cdp-skill\skills\chrome-cdp"
+```
+
+Junctions do not require admin. Requires Node 22.5+ (for the AgentX helper's built-in `node:sqlite`). After install, `git pull` in `C:\chrome-cdp-skill` is picked up by every Claude Code session immediately.
+
+### Which browsers work?
+
+| Browser | How it connects | Notes |
+| --- | --- | --- |
+| Chrome / Chromium / Brave / Edge / Vivaldi | auto-detect via standard install paths | toggle `chrome://inspect/#remote-debugging` once |
+| **AgentX** (antidetect, Windows-only) | `scripts/agentx.mjs` | **fork-only**; see [docs/AGENTX-WITH-CLAUDE.md](docs/AGENTX-WITH-CLAUDE.md) |
+| Any other Chromium-based browser (Dolphin, GoLogin, Multilogin, etc.) | set `CDP_PORT_FILE` to the full `DevToolsActivePort` path | no auto-detect |
+| Firefox / Safari | not supported | different debug protocols |
+
+The skill **connects to browsers that are already running** with remote debugging enabled. It never launches a browser itself — for AgentX specifically, you start the profile in the AgentX GUI first.
 
 ## Why this matters
 
@@ -63,6 +79,7 @@ scripts/cdp.mjs net    <target>                   # network resource timing
 scripts/cdp.mjs click  <target> "selector"        # click element by CSS selector
 scripts/cdp.mjs clickxy <target> <x> <y>          # click at CSS pixel coordinates
 scripts/cdp.mjs type   <target> "text"            # type at focused element (works in cross-origin iframes)
+scripts/cdp.mjs upload <target> "selector" <file> # attach a local file to <input type=file> (fork-only)
 scripts/cdp.mjs loadall <target> "selector"       # click "load more" until gone
 scripts/cdp.mjs evalraw <target> <method> [json]  # raw CDP command passthrough
 scripts/cdp.mjs open   [url]                      # open new tab (triggers Allow prompt)
