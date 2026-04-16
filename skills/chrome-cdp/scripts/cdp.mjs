@@ -440,6 +440,32 @@ async function typeStr(cdp, sid, text) {
   return `Typed ${text.length} characters`;
 }
 
+// Upload a local file to an <input type="file"> via DOM.setFileInputFiles.
+// Avoids the file-picker dialog that user-gesture clicks on file inputs open.
+async function uploadStr(cdp, sid, selector, filePath) {
+  if (!selector) throw new Error('CSS selector required');
+  if (!filePath) throw new Error('file path required');
+  const abs = resolve(filePath);
+  if (!existsSync(abs)) throw new Error(`File not found: ${abs}`);
+  const evalRes = await cdp.send('Runtime.evaluate', {
+    expression: `document.querySelector(${JSON.stringify(selector)})`,
+    returnByValue: false,
+  }, sid);
+  if (evalRes.exceptionDetails) {
+    throw new Error(`Selector eval failed: ${evalRes.exceptionDetails.text || 'unknown'}`);
+  }
+  const obj = evalRes.result;
+  if (!obj || !obj.objectId || obj.subtype === 'null') {
+    throw new Error(`Element not found: ${selector}`);
+  }
+  try {
+    await cdp.send('DOM.setFileInputFiles', { files: [abs], objectId: obj.objectId }, sid);
+  } finally {
+    try { await cdp.send('Runtime.releaseObject', { objectId: obj.objectId }, sid); } catch {}
+  }
+  return `Uploaded "${abs}" to <${selector}>`;
+}
+
 // Load-more: repeatedly click a button/selector until it disappears
 async function loadAllStr(cdp, sid, selector, intervalMs = 1500) {
   if (!selector) throw new Error('CSS selector required');
@@ -558,6 +584,7 @@ async function runDaemon(targetId) {
         case 'click': result = await clickStr(cdp, sessionId, args[0]); break;
         case 'clickxy': result = await clickXyStr(cdp, sessionId, args[0], args[1]); break;
         case 'type': result = await typeStr(cdp, sessionId, args[0]); break;
+        case 'upload': result = await uploadStr(cdp, sessionId, args[0], args[1]); break;
         case 'loadall': result = await loadAllStr(cdp, sessionId, args[0], args[1] ? parseInt(args[1]) : 1500); break;
         case 'evalraw': result = await evalRawStr(cdp, sessionId, args[0], args[1]); break;
         case 'stop': return { ok: true, result: '', stopAfter: true };
@@ -735,6 +762,8 @@ Usage: cdp <command> [args]
   clickxy <target> <x> <y>          Click at CSS pixel coordinates (see coordinate note below)
   type    <target> <text>           Type text at current focus via Input.insertText
                                     Works in cross-origin iframes unlike eval-based approaches
+  upload  <target> <selector> <file> Attach a local file to an <input type="file">
+                                    via DOM.setFileInputFiles (no user gesture / no picker)
   loadall <target> <selector> [ms]  Repeatedly click a "load more" button until it disappears
                                     Optional interval in ms between clicks (default 1500)
   evalraw <target> <method> [json]  Send a raw CDP command; returns JSON result
@@ -770,13 +799,13 @@ DAEMON IPC (for advanced use / scripting)
     Response: {"id":<number>, "ok":true,  "result":"<string>"}
            or {"id":<number>, "ok":false, "error":"<message>"}
   Commands mirror the CLI: snap, eval, shot, html, nav, net, click, clickxy,
-  type, loadall, evalraw, stop. Use evalraw to send arbitrary CDP methods.
+  type, upload, loadall, evalraw, stop. Use evalraw to send arbitrary CDP methods.
   The socket disappears after 20 min of inactivity or when the tab closes.
 `;
 
 const NEEDS_TARGET = new Set([
   'snap','snapshot','eval','shot','screenshot','html','nav','navigate',
-  'net','network','click','clickxy','type','loadall','evalraw',
+  'net','network','click','clickxy','type','upload','loadall','evalraw',
 ]);
 
 async function main() {

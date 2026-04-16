@@ -54,6 +54,7 @@ scripts/cdp.mjs net     <target>               # resource timing entries
 scripts/cdp.mjs click   <target> <selector>    # click element by CSS selector
 scripts/cdp.mjs clickxy <target> <x> <y>       # click at CSS pixel coords
 scripts/cdp.mjs type    <target> <text>         # Input.insertText at current focus; works in cross-origin iframes unlike eval
+scripts/cdp.mjs upload  <target> <selector> <file>  # attach a local file to <input type="file"> (no picker)
 scripts/cdp.mjs loadall <target> <selector> [ms]  # click "load more" until gone (default 1500ms between clicks)
 scripts/cdp.mjs evalraw <target> <method> [json]  # raw CDP command passthrough
 scripts/cdp.mjs open    [url]                  # open new tab (each triggers Allow prompt)
@@ -75,3 +76,26 @@ CSS px = screenshot image px / DPR
 - Prefer `snap --compact` over `html` for page structure.
 - Use `type` (not eval) to enter text in cross-origin iframes — `click`/`clickxy` to focus first, then `type`.
 - Chrome shows an "Allow debugging" modal once per tab on first access. A background daemon keeps the session alive so subsequent commands need no further approval. Daemons auto-exit after 20 minutes of inactivity.
+
+## AgentX antidetect browser (Windows)
+
+If the user mentions **AgentX**, a specific profile (e.g. "profile 2", "профиль 2"), an antidetect browser, or multi-account browsing — use the `agentx` helper to resolve a profile to its CDP endpoint automatically. This bypasses the need to find `DevToolsActivePort` manually.
+
+```bash
+scripts/agentx.mjs list                       # list AgentX profiles, show which are running
+scripts/agentx.mjs cdp <id|name> <cdp-args>   # run cdp.mjs against a profile
+scripts/agentx.mjs path <id|name>             # just print the DevToolsActivePort path
+scripts/agentx.mjs env  <id|name>             # print shell line to export CDP_PORT_FILE
+```
+
+Examples:
+
+```bash
+scripts/agentx.mjs cdp 1 list                               # list tabs in Profile 1
+scripts/agentx.mjs cdp "Profile 2" nav <tgt> https://...    # navigate a tab in Profile 2
+scripts/agentx.mjs cdp 1 upload <tgt> "#model-file" model.onnx
+```
+
+Requires Node 22.5+ (uses built-in `node:sqlite` to read `%APPDATA%\AgentX\data.db`). The user must start the profile in the AgentX GUI first — there is no CLI to auto-start profiles.
+
+For other non-standard browsers, set `CDP_PORT_FILE` to the full path of the `DevToolsActivePort` file; auto-detection only covers Chrome / Chromium / Brave / Edge / Vivaldi in their standard install locations.
