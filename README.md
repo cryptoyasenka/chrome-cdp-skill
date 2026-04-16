@@ -4,6 +4,17 @@ Let your AI agent see and interact with your **live Chrome session** — the tab
 
 Works out of the box with any Chrome installation. One toggle to enable, nothing else to install.
 
+> **Fork additions** on top of [pasky/chrome-cdp-skill](https://github.com/pasky/chrome-cdp-skill):
+> - `scripts/agentx.mjs` — resolves an AgentX antidetect browser profile (by id or name) to its CDP endpoint. See `skills/chrome-cdp/SKILL.md` → "AgentX antidetect browser".
+> - `upload <target> <selector> <file>` — attach a local file to `<input type="file">` via `DOM.setFileInputFiles`. No picker dialog.
+>
+> **Install as Claude Code skill (Windows, per-user)**:
+> ```cmd
+> git clone https://github.com/cryptoyasenka/chrome-cdp-skill C:\chrome-cdp-skill
+> mklink /J %USERPROFILE%\.claude\skills\chrome-cdp C:\chrome-cdp-skill\skills\chrome-cdp
+> ```
+> Requires Node 22.5+ (for the AgentX helper's built-in `node:sqlite`).
+
 ## Why this matters
 
 Most browser automation tools launch a fresh, isolated browser. This one connects to the Chrome you're already running, so your agent can:
