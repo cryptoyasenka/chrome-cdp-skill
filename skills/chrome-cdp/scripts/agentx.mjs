@@ -5,17 +5,37 @@
 // then either prints the path, prints a CDP_PORT_FILE export line, or execs
 // `cdp.mjs` with CDP_PORT_FILE pre-set.
 //
-// Requires Node 22.12+. The resolver uses `node:sqlite`, which needs
-// `--experimental-sqlite` on 22.5–22.8 and drops the flag in 22.9+. We set
-// the floor at 22.12 (first Node 22 LTS with no-flag `node:sqlite`) for a
-// zero-flag, LTS-backed install. Upstream `cdp.mjs` also needs Node 22+
-// for the global `WebSocket`; 22.12 covers both.
+// Requires Node 22.5+. The resolver uses the built-in `node:sqlite` module,
+// which was added in 22.5.0 behind `--experimental-sqlite`. The flag was
+// removed in Node 23+ (so 23.x and 24.x don't need it), but the Node 22 LTS
+// line kept the flag requirement. To spare users from thinking about this,
+// the script re-launches itself with `--experimental-sqlite` when running
+// on Node 22.x where the flag is missing. On Node 23+ the flag is a no-op
+// (still accepted, just unnecessary). Upstream `cdp.mjs` only needs Node
+// 22+ for the global `WebSocket`, which every 22.5+ install satisfies.
 
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+
+// Node 22.x requires --experimental-sqlite for node:sqlite; re-exec with the
+// flag if we're on 22.x and it's missing. Must happen before importing
+// node:sqlite below, otherwise the import throws ERR_UNKNOWN_BUILTIN_MODULE.
+{
+  const [nodeMajor] = process.versions.node.split('.').map(Number);
+  const needsFlag = nodeMajor === 22;
+  const hasFlag = process.execArgv.some(a => a.startsWith('--experimental-sqlite'));
+  if (needsFlag && !hasFlag) {
+    const r = spawnSync(
+      process.execPath,
+      ['--experimental-sqlite', process.argv[1], ...process.argv.slice(2)],
+      { stdio: 'inherit', env: process.env },
+    );
+    process.exit(r.status ?? 1);
+  }
+}
 
 // Suppress the Node "SQLite is experimental" warning by intercepting the
 // emit before the default warning printer runs. `process.on('warning')`
@@ -163,11 +183,11 @@ function cmdDoctor() {
 
   // Node version
   const [major, minor] = process.versions.node.split('.').map(Number);
-  const nodeOk = major > 22 || (major === 22 && minor >= 12);
+  const nodeOk = major > 22 || (major === 22 && minor >= 5);
   if (nodeOk) {
-    push('OK', `Node.js ${process.versions.node} (>= 22.12 required)`);
+    push('OK', `Node.js ${process.versions.node} (>= 22.5 required; flag for node:sqlite auto-added on Node 22.x)`);
   } else {
-    push('FAIL', `Node.js ${process.versions.node} is too old — install 22.12+ (LTS) from https://nodejs.org. The built-in node:sqlite module needs --experimental-sqlite flag on 22.5–22.8 and is flag-free since 22.9; 22.12 is the first LTS.`);
+    push('FAIL', `Node.js ${process.versions.node} is too old — install Node 22.5+ from https://nodejs.org. Any LTS or Current release from the 22.5+ era works; on Node 22 this script auto-passes --experimental-sqlite so you don't need to.`);
   }
 
   // Platform

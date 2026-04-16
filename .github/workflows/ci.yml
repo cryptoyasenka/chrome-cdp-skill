@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        node: ['22.12', '22.x', '24.x']
+        node: ['22.5', '22.x', '24.x']
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -25,11 +25,11 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      - name: Confirm Node version meets fork floor (>= 22.12)
+      - name: Confirm Node version meets fork floor (>= 22.5)
         shell: bash
         run: |
           node --version
-          node -e "const [maj, min] = process.versions.node.split('.').map(Number); if (maj < 22 || (maj === 22 && min < 12)) { console.error('Node too old for fork'); process.exit(1); }"
+          node -e "const [maj, min] = process.versions.node.split('.').map(Number); if (maj < 22 || (maj === 22 && min < 5)) { console.error('Node too old for fork'); process.exit(1); }"
 
       - name: Syntax check (node --check)
         shell: bash

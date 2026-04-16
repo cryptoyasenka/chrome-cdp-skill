@@ -16,7 +16,7 @@ Net result: you say "what's open in AgentX profile 2?" and Claude lists the tabs
 
 - **Windows** (AgentX is Windows-only, so the resolver is too).
 - **AgentX** installed, with at least one profile created and launched at least once (so `data.db` has the profile row and the profile folder exists).
-- **Node.js 22.12 or newer (LTS) — hard requirement.** The resolver uses the built-in `node:sqlite` module. `node:sqlite` was introduced in Node 22.5.0 behind the `--experimental-sqlite` flag, dropped the flag in 22.9.0, and first landed in an LTS release with Node 22.12.0. We pin the floor at 22.12 so users get no-flag `node:sqlite` *and* long-term support in the same release. Upstream `cdp.mjs` also needs Node 22+ for the global `WebSocket` — 22.12 covers both. Check with `node --version`; upgrade from [nodejs.org](https://nodejs.org/) or via [`nvm-windows`](https://github.com/coreybutler/nvm-windows) if older. Nothing in this fork works around this — zero npm dependencies is a core guarantee we chose over back-compat.
+- **Node.js 22.5 or newer — hard requirement.** The resolver uses the built-in `node:sqlite` module, added in Node 22.5.0. On the Node 22 LTS line it's gated behind `--experimental-sqlite` (the flag was dropped on the Current line at 23.0.0 and stays dropped on 24+). **`agentx.mjs` transparently re-launches itself with `--experimental-sqlite` on Node 22.x**, so end-users never deal with the flag manually. Upstream `cdp.mjs` also needs Node 22+ for the global `WebSocket` — any Node ≥ 22.5 covers both. Check with `node --version`; upgrade from [nodejs.org](https://nodejs.org/) or via [`nvm-windows`](https://github.com/coreybutler/nvm-windows) if older. Nothing in this fork requires npm packages — zero npm dependencies is a core guarantee.
 - **Claude Code** installed ([claude.com/claude-code](https://claude.com/claude-code)).
 - **Git** installed (for cloning the repo).
 
@@ -178,7 +178,7 @@ The selector didn't match any profile. Run `agentx list` to see exact names. Sel
 
 ### Node version error
 
-`agentx.mjs` uses `node:sqlite` which needs **Node 22.12+ (LTS)**. Technical detail: `node:sqlite` was added in 22.5 behind `--experimental-sqlite`, dropped the flag in 22.9, and first landed in LTS at 22.12; we pin 22.12 so the install is zero-flag *and* LTS-backed. Upstream `cdp.mjs` also needs Node 22+ for the global `WebSocket` — 22.12 covers both. If `node --version` shows anything older, install Node 22.12 or newer from [nodejs.org](https://nodejs.org/) or via [`nvm-windows`](https://github.com/coreybutler/nvm-windows). There is no fallback — zero-npm-install is one of this fork's core guarantees, so we depend on recent built-in modules rather than shipping polyfills.
+`agentx.mjs` uses `node:sqlite` which needs **Node 22.5+**. On the Node 22 LTS line `node:sqlite` is gated behind `--experimental-sqlite`; the script detects Node 22.x and re-launches itself with the flag automatically, so you never type it manually. Node 23+ / 24+ doesn't need the flag (but accepts it harmlessly). Upstream `cdp.mjs` also needs Node 22+ for the global `WebSocket` — any 22.5+ install covers both. If `node --version` shows anything older, install Node 22.5 or newer from [nodejs.org](https://nodejs.org/) or via [`nvm-windows`](https://github.com/coreybutler/nvm-windows). There is no npm fallback — zero-npm-install is one of this fork's core guarantees.
 
 ## Known limitations
 
