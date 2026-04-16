@@ -10,7 +10,7 @@ Lightweight Chrome DevTools Protocol CLI. Connects directly via WebSocket — no
 ## Prerequisites
 
 - Chrome (or Chromium, Brave, Edge, Vivaldi) with remote debugging enabled: open `chrome://inspect/#remote-debugging` and toggle the switch
-- **Node.js 22.5+** — required (built-in WebSocket for CDP + `node:sqlite` for the AgentX resolver). Check with `node --version`; upgrade from https://nodejs.org if older.
+- **Node.js 22.12+ (LTS)** — required. Uses built-in `WebSocket` (stable since 22) for CDP + built-in `node:sqlite` (flag-free since 22.9, first LTS in 22.12) for the AgentX resolver. Check with `node --version`; upgrade from https://nodejs.org if older.
 - If your browser's `DevToolsActivePort` is in a non-standard location, set `CDP_PORT_FILE` to its full path
 
 ## Commands

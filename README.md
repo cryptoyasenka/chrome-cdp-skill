@@ -1,7 +1,7 @@
 # chrome-cdp
 
 [![CI](https://github.com/cryptoyasenka/chrome-cdp-skill/actions/workflows/ci.yml/badge.svg)](https://github.com/cryptoyasenka/chrome-cdp-skill/actions/workflows/ci.yml)
-[![Node ≥ 22.5](https://img.shields.io/badge/node-%E2%89%A5%2022.5-brightgreen)](https://nodejs.org/)
+[![Node ≥ 22.12](https://img.shields.io/badge/node-%E2%89%A5%2022.12-brightgreen)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 Let your AI agent see and interact with your **live Chrome session** — the tabs you already have open, your logged-in accounts, your current page state. No browser automation framework, no separate browser instance, no re-login.
@@ -19,7 +19,7 @@ Everything else — the daemon architecture, the `list`/`shot`/`snap`/`eval`/`na
 
 ### Quick install as a Claude Code skill (Windows)
 
-> **Requires Node.js 22.5 or newer.** The fork uses the built-in `node:sqlite` module (stable since 22.5) for the AgentX resolver and global `WebSocket` (stable since 22) for the CDP client. Check with `node --version`; upgrade from [nodejs.org](https://nodejs.org/) or via `nvm-windows` if older. No npm install.
+> **Requires Node.js 22.12 or newer (LTS).** The fork uses the built-in `node:sqlite` module for the AgentX resolver and global `WebSocket` (stable since Node 22) for the CDP client. `node:sqlite` needs `--experimental-sqlite` on Node 22.5–22.8 and drops the flag in 22.9+; we pin the floor at 22.12 because that's the first Node 22 LTS with no-flag `node:sqlite` — the safe, zero-configuration install target. Check with `node --version`; upgrade from [nodejs.org](https://nodejs.org/) or via `nvm-windows` if older. No npm install.
 
 cmd.exe:
 
@@ -74,7 +74,7 @@ pi install git:github.com/pasky/chrome-cdp-skill@v1.0.1
 
 ### For other agents (Amp, Claude Code, Cursor, etc.)
 
-Clone or copy the `skills/chrome-cdp/` directory wherever your agent loads skills or context from. The only runtime dependency is **Node.js 22.5+** — no npm install needed. (22.5+ is required by the AgentX resolver shipped in this fork; if you will only ever use plain `cdp.mjs` against stock Chrome, 22+ is enough.)
+Clone or copy the `skills/chrome-cdp/` directory wherever your agent loads skills or context from. The only runtime dependency is **Node.js 22.12+ (LTS)** — no npm install needed. (22.12+ is required by the AgentX resolver shipped in this fork, which uses no-flag `node:sqlite`; if you will only ever use plain `cdp.mjs` against stock Chrome, Node 22+ is enough.)
 
 ### Enable remote debugging in Chrome
 

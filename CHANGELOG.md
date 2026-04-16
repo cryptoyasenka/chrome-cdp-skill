@@ -28,17 +28,21 @@ First tagged release of the fork. Baseline: upstream commit `1fd55c7`.
 - **`docs/AGENTX-WITH-CLAUDE.md`** — end-to-end guide for connecting
   AgentX profiles to Claude Code, including multilingual trigger phrase
   examples (English / Russian / Ukrainian / Polish / any other).
-- **`package.json`** with `engines.node >= 22.5.0`, fork authorship
+- **`package.json`** with `engines.node >= 22.12.0`, fork authorship
   (`@pasky` as upstream, `@cryptoyasenka` as fork maintainer), and
   fork-specific `repository` / `homepage` / `bugs` URLs.
 - **GitHub Actions CI** — smoke tests on Ubuntu + Windows across Node
-  22.5 / 22.x / 24.x matrix: syntax check, `--help` exit status,
+  22.12 / 22.x / 24.x matrix: syntax check, `--help` exit status,
   `doctor` error-path verification.
 
 ### Changed
 
-- **Node.js 22.5+ is now a hard requirement.** The resolver uses
-  `node:sqlite` (stable since 22.5); upstream `cdp.mjs` already
+- **Node.js 22.12+ (LTS) is now a hard requirement.** The resolver
+  uses `node:sqlite`, which was added in Node 22.5.0 behind the
+  `--experimental-sqlite` flag, dropped the flag in 22.9.0, and
+  first appeared in an LTS release with 22.12.0. We set the floor
+  at 22.12 so users get no-flag `node:sqlite` *and* long-term
+  support in a single release. Upstream `cdp.mjs` already
   required Node 22+ for the global `WebSocket`. The floor is enforced
   via `engines` in `package.json`, a runtime check in `doctor`, and
   prominent notes in README / SKILL.md / docs.

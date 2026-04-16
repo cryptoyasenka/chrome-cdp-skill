@@ -5,8 +5,11 @@
 // then either prints the path, prints a CDP_PORT_FILE export line, or execs
 // `cdp.mjs` with CDP_PORT_FILE pre-set.
 //
-// Requires Node 22.5+ (node:sqlite). Upstream cdp.mjs also needs Node 22+
-// for the global WebSocket, so 22.5+ is the effective floor for the whole fork.
+// Requires Node 22.12+. The resolver uses `node:sqlite`, which needs
+// `--experimental-sqlite` on 22.5–22.8 and drops the flag in 22.9+. We set
+// the floor at 22.12 (first Node 22 LTS with no-flag `node:sqlite`) for a
+// zero-flag, LTS-backed install. Upstream `cdp.mjs` also needs Node 22+
+// for the global `WebSocket`; 22.12 covers both.
 
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
@@ -160,11 +163,11 @@ function cmdDoctor() {
 
   // Node version
   const [major, minor] = process.versions.node.split('.').map(Number);
-  const nodeOk = major > 22 || (major === 22 && minor >= 5);
+  const nodeOk = major > 22 || (major === 22 && minor >= 12);
   if (nodeOk) {
-    push('OK', `Node.js ${process.versions.node} (>= 22.5 required)`);
+    push('OK', `Node.js ${process.versions.node} (>= 22.12 required)`);
   } else {
-    push('FAIL', `Node.js ${process.versions.node} is too old — install 22.5+ from https://nodejs.org`);
+    push('FAIL', `Node.js ${process.versions.node} is too old — install 22.12+ (LTS) from https://nodejs.org. The built-in node:sqlite module needs --experimental-sqlite flag on 22.5–22.8 and is flag-free since 22.9; 22.12 is the first LTS.`);
   }
 
   // Platform
