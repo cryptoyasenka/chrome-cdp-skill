@@ -16,7 +16,7 @@ Net result: you say "what's open in AgentX profile 2?" and Claude lists the tabs
 
 - **Windows** (AgentX is Windows-only, so the resolver is too).
 - **AgentX** installed, with at least one profile created and launched at least once (so `data.db` has the profile row and the profile folder exists).
-- **Node.js 22.5 or newer** — the resolver uses the built-in `node:sqlite` module. Check with `node --version`.
+- **Node.js 22.5 or newer — hard requirement.** The resolver uses the built-in `node:sqlite` module (stable since 22.5); upstream `cdp.mjs` also needs 22+ for the global `WebSocket`. Check with `node --version`; upgrade from [nodejs.org](https://nodejs.org/) or via [`nvm-windows`](https://github.com/coreybutler/nvm-windows) if older. Nothing in this fork works around this — we chose zero-dependencies over back-compat.
 - **Claude Code** installed ([claude.com/claude-code](https://claude.com/claude-code)).
 - **Git** installed (for cloning the repo).
 
@@ -42,13 +42,19 @@ New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\chrome-cdp" -
 
 Junctions **do not require admin** on Windows 10/11.
 
-Verify the install:
+Verify the install with the built-in self-diagnostic:
+
+```bash
+node ~/.claude/skills/chrome-cdp/scripts/agentx.mjs doctor
+```
+
+It runs ten checks — Node version, platform, `%APPDATA%`, AgentX install, `data.db`, profiles directory, profile count, running state, sibling `cdp.mjs`, Claude skill junction — and marks each `[OK]` / `[WARN]` / `[INFO]` / `[FAIL]`. If everything's green, you're done. If something fails, the message tells you exactly what to fix.
+
+You can also run `list` to see the profile table directly:
 
 ```bash
 node ~/.claude/skills/chrome-cdp/scripts/agentx.mjs list
 ```
-
-You should see a table of your AgentX profiles with their running/not-running state.
 
 ## Start a profile
 
@@ -112,6 +118,9 @@ Claude will iterate, and each screenshot stays isolated to its own profile — n
 If you prefer to drive it yourself instead of going through Claude:
 
 ```bash
+# Self-diagnostic (run this first if anything seems off)
+node ~/.claude/skills/chrome-cdp/scripts/agentx.mjs doctor
+
 # List all profiles and their running state
 node ~/.claude/skills/chrome-cdp/scripts/agentx.mjs list
 
@@ -136,6 +145,8 @@ node ~/.claude/skills/chrome-cdp/scripts/cdp.mjs list
 `<target-prefix>` is the unique prefix shown by `list` (typically 8 hex characters, e.g. `6BE827FA`).
 
 ## Troubleshooting
+
+**Run `agentx doctor` first.** It pinpoints almost every common problem in one go (Node version, missing AgentX install, broken junction, no running profile). The sections below are for when you want more detail on a specific failure.
 
 ### "AgentX database not found at ...data.db"
 
@@ -164,7 +175,7 @@ The selector didn't match any profile. Run `agentx list` to see exact names. Sel
 
 ### Node version error
 
-`agentx.mjs` uses `node:sqlite` which requires Node 22.5+. If `node --version` shows older, install a newer Node from [nodejs.org](https://nodejs.org/) or via `nvm-windows`.
+`agentx.mjs` uses `node:sqlite` which requires **Node 22.5+**; upstream `cdp.mjs` also needs 22+ for the global `WebSocket`. If `node --version` shows anything older, install Node 22.5 or newer from [nodejs.org](https://nodejs.org/) or via [`nvm-windows`](https://github.com/coreybutler/nvm-windows). There is no fallback — zero-npm-install is one of this fork's core guarantees, so we depend on recent built-in modules rather than shipping polyfills.
 
 ## Known limitations
 

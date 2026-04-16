@@ -10,7 +10,7 @@ Lightweight Chrome DevTools Protocol CLI. Connects directly via WebSocket — no
 ## Prerequisites
 
 - Chrome (or Chromium, Brave, Edge, Vivaldi) with remote debugging enabled: open `chrome://inspect/#remote-debugging` and toggle the switch
-- Node.js 22+ (uses built-in WebSocket)
+- **Node.js 22.5+** — required (built-in WebSocket for CDP + `node:sqlite` for the AgentX resolver). Check with `node --version`; upgrade from https://nodejs.org if older.
 - If your browser's `DevToolsActivePort` is in a non-standard location, set `CDP_PORT_FILE` to its full path
 
 ## Commands
@@ -82,11 +82,14 @@ CSS px = screenshot image px / DPR
 If the user mentions **AgentX**, a specific profile (e.g. "profile 2", "профиль 2"), an antidetect browser, or multi-account browsing — use the `agentx` helper to resolve a profile to its CDP endpoint automatically. This bypasses the need to find `DevToolsActivePort` manually.
 
 ```bash
+scripts/agentx.mjs doctor                     # self-diagnostic: Node version, AgentX, paths
 scripts/agentx.mjs list                       # list AgentX profiles, show which are running
 scripts/agentx.mjs cdp <id|name> <cdp-args>   # run cdp.mjs against a profile
 scripts/agentx.mjs path <id|name>             # just print the DevToolsActivePort path
 scripts/agentx.mjs env  <id|name>             # print shell line to export CDP_PORT_FILE
 ```
+
+When the user reports the skill isn't working ("не работает", "broken", "can't connect"), run `scripts/agentx.mjs doctor` first — it pinpoints Node version mismatches, missing AgentX install, or broken skill junction in one shot.
 
 Examples:
 
@@ -96,6 +99,6 @@ scripts/agentx.mjs cdp "Profile 2" nav <tgt> https://...    # navigate a tab in 
 scripts/agentx.mjs cdp 1 upload <tgt> "#model-file" model.onnx
 ```
 
-Requires Node 22.5+ (uses built-in `node:sqlite` to read `%APPDATA%\AgentX\data.db`). The user must start the profile in the AgentX GUI first — there is no CLI to auto-start profiles.
+The user must start the profile in the AgentX GUI first — there is no CLI to auto-start profiles.
 
 For other non-standard browsers, set `CDP_PORT_FILE` to the full path of the `DevToolsActivePort` file; auto-detection only covers Chrome / Chromium / Brave / Edge / Vivaldi in their standard install locations.

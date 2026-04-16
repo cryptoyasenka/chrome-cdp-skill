@@ -15,6 +15,8 @@ Everything else — the daemon architecture, the `list`/`shot`/`snap`/`eval`/`na
 
 ### Quick install as a Claude Code skill (Windows)
 
+> **Requires Node.js 22.5 or newer.** The fork uses the built-in `node:sqlite` module (stable since 22.5) for the AgentX resolver and global `WebSocket` (stable since 22) for the CDP client. Check with `node --version`; upgrade from [nodejs.org](https://nodejs.org/) or via `nvm-windows` if older. No npm install.
+
 cmd.exe:
 
 ```cmd
@@ -29,7 +31,15 @@ git clone https://github.com/cryptoyasenka/chrome-cdp-skill C:\chrome-cdp-skill
 New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\chrome-cdp" -Target "C:\chrome-cdp-skill\skills\chrome-cdp"
 ```
 
-Junctions do not require admin. Requires Node 22.5+ (for the AgentX helper's built-in `node:sqlite`). After install, `git pull` in `C:\chrome-cdp-skill` is picked up by every Claude Code session immediately.
+Junctions do not require admin. After install, `git pull` in `C:\chrome-cdp-skill` is picked up by every Claude Code session immediately.
+
+Verify the install with the built-in self-diagnostic:
+
+```bash
+node ~/.claude/skills/chrome-cdp/scripts/agentx.mjs doctor
+```
+
+It checks your Node version, AgentX install, profile state, and the Claude skill junction — and tells you exactly what's wrong if something fails.
 
 ### Which browsers work?
 
@@ -60,7 +70,7 @@ pi install git:github.com/pasky/chrome-cdp-skill@v1.0.1
 
 ### For other agents (Amp, Claude Code, Cursor, etc.)
 
-Clone or copy the `skills/chrome-cdp/` directory wherever your agent loads skills or context from. The only runtime dependency is **Node.js 22+** — no npm install needed.
+Clone or copy the `skills/chrome-cdp/` directory wherever your agent loads skills or context from. The only runtime dependency is **Node.js 22.5+** — no npm install needed. (22.5+ is required by the AgentX resolver shipped in this fork; if you will only ever use plain `cdp.mjs` against stock Chrome, 22+ is enough.)
 
 ### Enable remote debugging in Chrome
 

@@ -5,7 +5,8 @@
 // then either prints the path, prints a CDP_PORT_FILE export line, or execs
 // `cdp.mjs` with CDP_PORT_FILE pre-set.
 //
-// Requires Node 22.5+ (node:sqlite).
+// Requires Node 22.5+ (node:sqlite). Upstream cdp.mjs also needs Node 22+
+// for the global WebSocket, so 22.5+ is the effective floor for the whole fork.
 
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
@@ -148,16 +149,121 @@ function cmdCdp(selector, rest) {
   process.exit(r.status ?? 1);
 }
 
+function cmdDoctor() {
+  const report = [];
+  let issues = 0;
+
+  const push = (level, msg) => {
+    report.push(`  [${level.padEnd(4)}] ${msg}`);
+    if (level === 'FAIL') issues++;
+  };
+
+  // Node version
+  const [major, minor] = process.versions.node.split('.').map(Number);
+  const nodeOk = major > 22 || (major === 22 && minor >= 5);
+  if (nodeOk) {
+    push('OK', `Node.js ${process.versions.node} (>= 22.5 required)`);
+  } else {
+    push('FAIL', `Node.js ${process.versions.node} is too old — install 22.5+ from https://nodejs.org`);
+  }
+
+  // Platform
+  if (process.platform === 'win32') {
+    push('OK', 'Platform: win32');
+  } else {
+    push('FAIL', `Platform "${process.platform}" — AgentX is Windows-only`);
+  }
+
+  // APPDATA
+  if (process.env.APPDATA) {
+    push('OK', `APPDATA = ${process.env.APPDATA}`);
+  } else {
+    push('FAIL', 'APPDATA env var is not set');
+  }
+
+  // AgentX root
+  if (existsSync(AGENTX_ROOT)) {
+    push('OK', `AgentX directory: ${AGENTX_ROOT}`);
+  } else {
+    push('FAIL', `AgentX directory not found at ${AGENTX_ROOT} — install AgentX and launch it once`);
+  }
+
+  // data.db
+  if (existsSync(DB_PATH)) {
+    push('OK', 'AgentX database present (data.db)');
+  } else {
+    push('FAIL', `data.db not found at ${DB_PATH} — launch AgentX once to create it`);
+  }
+
+  // Profiles dir
+  if (existsSync(PROFILES_DIR)) {
+    push('OK', 'Profiles directory present');
+  } else {
+    push('WARN', `No profiles directory at ${PROFILES_DIR} — create a profile in the AgentX GUI`);
+  }
+
+  // Profiles count + running state
+  if (nodeOk && existsSync(DB_PATH)) {
+    try {
+      const profiles = listProfiles();
+      if (profiles.length === 0) {
+        push('WARN', 'No profiles registered in AgentX yet');
+      } else {
+        push('OK', `${profiles.length} profile(s) registered`);
+        const running = profiles.filter(p => p.hasPortFile).length;
+        if (running > 0) {
+          push('OK', `${running} profile(s) currently running`);
+        } else {
+          push('INFO', "No profiles currently running — launch one in AgentX before using 'agentx cdp'");
+        }
+      }
+    } catch (e) {
+      push('FAIL', `Could not read AgentX database: ${e.message}`);
+    }
+  }
+
+  // Sibling cdp.mjs
+  const cdpPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'cdp.mjs');
+  if (existsSync(cdpPath)) {
+    push('OK', 'Sibling cdp.mjs found');
+  } else {
+    push('FAIL', `cdp.mjs not found next to agentx.mjs at ${cdpPath}`);
+  }
+
+  // Claude skill junction (optional)
+  const userHome = process.env.USERPROFILE;
+  if (userHome) {
+    const skillPath = path.join(userHome, '.claude', 'skills', 'chrome-cdp');
+    if (existsSync(skillPath)) {
+      push('OK', `Claude skill path: ${skillPath}`);
+    } else {
+      push('INFO', `No Claude skill junction at ${skillPath} (direct CLI use still works)`);
+    }
+  }
+
+  console.log('agentx doctor:');
+  console.log(report.join('\n'));
+  console.log('');
+  if (issues === 0) {
+    console.log('All checks passed.');
+  } else {
+    console.log(`${issues} issue(s) found — see [FAIL] lines above.`);
+    process.exit(1);
+  }
+}
+
 function usage() {
   console.log(`agentx — AgentX profile resolver for chrome-cdp
 
 Usage:
   agentx list                       List AgentX profiles and their running state
+  agentx doctor                     Self-diagnostic (Node, AgentX, skill path)
   agentx path    <id|name>          Print DevToolsActivePort path for profile
   agentx env     <id|name>          Print shell line to export CDP_PORT_FILE
   agentx cdp     <id|name> <args>   Run cdp.mjs against the profile
 
 Examples:
+  agentx doctor                     # verify install, first thing to run
   agentx list
   agentx cdp 1 list                 # list tabs in AgentX profile #1
   agentx cdp "Profile 2" shot <tgt>
@@ -167,10 +273,11 @@ Examples:
 
 const [, , cmd, ...rest] = process.argv;
 switch (cmd) {
-  case 'list': cmdList(); break;
-  case 'path': cmdPath(rest[0]); break;
-  case 'env':  cmdEnv(rest[0]); break;
-  case 'cdp':  cmdCdp(rest[0], rest.slice(1)); break;
+  case 'list':   cmdList(); break;
+  case 'doctor': cmdDoctor(); break;
+  case 'path':   cmdPath(rest[0]); break;
+  case 'env':    cmdEnv(rest[0]); break;
+  case 'cdp':    cmdCdp(rest[0], rest.slice(1)); break;
   case undefined:
   case '-h':
   case '--help':

@@ -16,6 +16,9 @@
     "claude-code"
   ],
   "license": "MIT",
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "author": "Petr Baudis (@pasky) — original; @cryptoyasenka — fork additions (AgentX + upload)",
   "contributors": [
     {
