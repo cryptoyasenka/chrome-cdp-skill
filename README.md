@@ -8,12 +8,21 @@ Works out of the box with any Chrome installation. One toggle to enable, nothing
 > - `scripts/agentx.mjs` — resolves an AgentX antidetect browser profile (by id or name) to its CDP endpoint. See `skills/chrome-cdp/SKILL.md` → "AgentX antidetect browser".
 > - `upload <target> <selector> <file>` — attach a local file to `<input type="file">` via `DOM.setFileInputFiles`. No picker dialog.
 >
-> **Install as Claude Code skill (Windows, per-user)**:
+> **Install as Claude Code skill (Windows, per-user)** — pick one shell:
+>
+> `cmd.exe`:
 > ```cmd
 > git clone https://github.com/cryptoyasenka/chrome-cdp-skill C:\chrome-cdp-skill
 > mklink /J %USERPROFILE%\.claude\skills\chrome-cdp C:\chrome-cdp-skill\skills\chrome-cdp
 > ```
-> Requires Node 22.5+ (for the AgentX helper's built-in `node:sqlite`).
+>
+> PowerShell:
+> ```powershell
+> git clone https://github.com/cryptoyasenka/chrome-cdp-skill C:\chrome-cdp-skill
+> New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills\chrome-cdp" -Target "C:\chrome-cdp-skill\skills\chrome-cdp"
+> ```
+>
+> Junctions don't require admin. Requires Node 22.5+ (for the AgentX helper's built-in `node:sqlite`). Once the junction is in place, any Claude Code session discovers the skill automatically — `git pull` in the cloned repo is reflected immediately.
 
 ## Why this matters
 
