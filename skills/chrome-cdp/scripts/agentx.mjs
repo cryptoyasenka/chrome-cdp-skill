@@ -13,10 +13,21 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-process.on('warning', (w) => {
-  if (w.name === 'ExperimentalWarning' && /SQLite/i.test(w.message)) return;
-  console.warn(w.stack || String(w));
-});
+// Suppress the Node "SQLite is experimental" warning by intercepting the
+// emit before the default warning printer runs. `process.on('warning')`
+// listeners run in addition to the default handler, so they can't silence it.
+const origEmit = process.emit.bind(process);
+process.emit = function (name, data, ...rest) {
+  if (
+    name === 'warning' &&
+    data &&
+    data.name === 'ExperimentalWarning' &&
+    /SQLite/i.test(data.message || '')
+  ) {
+    return false;
+  }
+  return origEmit(name, data, ...rest);
+};
 
 const { DatabaseSync } = await import('node:sqlite');
 
