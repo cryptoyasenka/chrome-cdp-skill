@@ -8,7 +8,7 @@ This guide walks you through connecting [AgentX antidetect browser](https://agen
 
 - **AgentX** keeps each profile in its own folder at `%APPDATA%\AgentX\profile\<browser_id>\` and writes a `DevToolsActivePort` file there when the profile is running. That folder is not in the standard places `cdp.mjs` auto-detects.
 - **`scripts/agentx.mjs`** reads `%APPDATA%\AgentX\data.db` (a SQLite database maintained by AgentX) to map a human-friendly selector (`1`, `"Profile 2"`) to the correct `browser_id`, then runs `cdp.mjs` with `CDP_PORT_FILE` pointed at that profile's port file.
-- Claude Code discovers the skill via `~/.claude/skills/chrome-cdp/SKILL.md` and picks up the AgentX section when your prompt mentions AgentX, a profile number, or "antidetect".
+- Claude Code discovers the skill via `~/.claude/skills/chrome-cdp/SKILL.md` and picks up the AgentX section when your prompt mentions AgentX, a profile number, or "antidetect" — **in any language**. Claude matches on intent, not on specific strings, so you can prompt in English, Russian, Ukrainian, Polish, or anything else you're comfortable with.
 
 Net result: you say "what's open in AgentX profile 2?" and Claude lists the tabs in that specific profile. No separate browser instance spun up. No re-login. Cookies, sessions, and logged-in state stay exactly as you left them.
 
@@ -72,10 +72,13 @@ Claude discovers the skill automatically. You don't type a slash command — you
 
 ### Trigger phrases Claude picks up
 
-- "AgentX profile 2"
-- "профиль 2 в AgentX"
-- "my antidetect browser"
-- "the tabs in profile 3"
+**Write in whatever language you prefer.** Claude matches on intent, not on exact wording — the examples below are just confirmation that common phrasings work. "AgentX" is a brand name and stays identical across languages, which makes the trigger especially reliable.
+
+- **English** — "AgentX profile 2", "my antidetect browser", "the tabs in profile 3", "open profile 1 in AgentX"
+- **Русский** — "профиль 2 в AgentX", "мой антидетект браузер", "вкладки в профиле 3", "открой первый профиль"
+- **Українська** — "профіль 2 в AgentX", "мій антидетект браузер", "вкладки в профілі 3", "відкрий перший профіль"
+- **Polski** — "profil 2 w AgentX", "moja przeglądarka antydetekt", "karty w profilu 3", "otwórz pierwszy profil"
+- **Any other language** — same idea; just describe what you want naturally.
 
 When Claude sees any of these, it uses `agentx.mjs`. For regular Chrome / Edge / etc. it uses plain `cdp.mjs`.
 

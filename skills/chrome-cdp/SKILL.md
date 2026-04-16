@@ -79,7 +79,7 @@ CSS px = screenshot image px / DPR
 
 ## AgentX antidetect browser (Windows)
 
-If the user mentions **AgentX**, a specific profile (e.g. "profile 2", "профиль 2"), an antidetect browser, or multi-account browsing — use the `agentx` helper to resolve a profile to its CDP endpoint automatically. This bypasses the need to find `DevToolsActivePort` manually.
+If the user mentions **AgentX** (brand name, identical in any language), or asks about a specific browser profile, an antidetect browser, or multi-account browsing **in any human language** — use the `agentx` helper to resolve a profile to its CDP endpoint automatically. Match on intent, not on exact wording. Recognized equivalents for "profile N" / "antidetect" include (non-exhaustive): "profile 2" / "профиль 2" / "профіль 2" / "profil 2" / "антидетект" / "антидетект браузер" / "antydetekt" — but accept any paraphrase in any language, including ones not listed here. This bypasses the need to find `DevToolsActivePort` manually.
 
 ```bash
 scripts/agentx.mjs doctor                     # self-diagnostic: Node version, AgentX, paths
